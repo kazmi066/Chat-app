@@ -1,61 +1,59 @@
-import { React, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import queryString from "query-string";
 import io from "socket.io-client";
 
-import "./Chat.css";
+import TextContainer from "../TextContainer/TextContainer";
+import Messages from "../Messages/Messages";
 import InfoBar from "../InfoBar/InfoBar";
 import Input from "../Input/Input";
-import Messages from "../Messages/Messages";
-import TextContainer from "../TextContainer/TextContainer";
+
+import "./Chat.css";
+
+const ENDPOINT = "https://react-chat-app05.herokuapp.com/";
+
 let socket;
 
-export default function Chat({ location }) {
+const Chat = ({ location }) => {
   const [name, setName] = useState("");
   const [room, setRoom] = useState("");
   const [users, setUsers] = useState("");
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
-  const ENDPOINT = "https://react-chat-app05.herokuapp.com/";
 
   useEffect(() => {
     const { name, room } = queryString.parse(location.search);
 
     socket = io(ENDPOINT, {
-      withCredentials: true,
       transports: ["websocket", "polling", "flashsocket"],
     });
 
-    setName(name);
     setRoom(room);
+    setName(name);
 
-    socket.emit("join", { name, room }, () => {});
-
-    return () => {
-      socket.emit("disconnect");
-
-      socket.off();
-    };
-  }, [(ENDPOINT, location.search)]);
+    socket.emit("join", { name, room }, (error) => {
+      if (error) {
+        alert(error);
+      }
+    });
+  }, [ENDPOINT, location.search]);
 
   useEffect(() => {
     socket.on("message", (message) => {
-      setMessages(...messages, message);
+      setMessages((messages) => [...messages, message]);
     });
 
     socket.on("roomData", ({ users }) => {
       setUsers(users);
     });
-  }, [messages]);
+  }, []);
 
   const sendMessage = (event) => {
     event.preventDefault();
+
     if (message) {
-      socket.emit("sendMessage", (message, () => setMessage("")));
+      socket.emit("sendMessage", message, () => setMessage(""));
     }
   };
-
-  console.log(message);
-  console.log(messages);
 
   return (
     <div className="outerContainer">
@@ -71,4 +69,6 @@ export default function Chat({ location }) {
       <TextContainer users={users} />
     </div>
   );
-}
+};
+
+export default Chat;
