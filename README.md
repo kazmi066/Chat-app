@@ -7,3 +7,6 @@ stuff used:
 - socket.io
 - express
 - query-string
+
+# live demo
+https://chat-app-sockets-635648.netlify.app
